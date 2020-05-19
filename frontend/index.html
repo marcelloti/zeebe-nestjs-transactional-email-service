@@ -1,0 +1,98 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <style>
+      button {
+        margin: 30px;
+        padding: 30px;
+        font-size: 18px;
+      }
+      #result{
+        border: 0px solid #000;
+        width: 50%;
+        margin: 0 30px;
+        height: 60px;
+      }
+
+      #clear{
+        margin: 10px;
+        padding: 10px;
+        font-size: 15px;
+      }
+
+      textarea{
+        line-height: 25px;
+      }
+    </style>
+  </head>
+  <body>
+    <p><h2>Actions:</h2></p>
+    <button id='welcomeMail'>Send welcome mail</button>
+    <button id='marketingMail'>Send marketing mail</button>
+    <button id='notExistMail'>Send mail with non-exist template</button>
+
+    <br/>
+    <button id='msgToServer'>Ping on socket</button>
+
+    <div id='result'>
+      RESULT: <button id='clear'>Clear</button>
+      <textarea id='resultText' cols=140 rows=10></textarea>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script>
+        const socket = io('http://localhost:3001');
+        socket.on('events', function(msg){
+          $("#resultText").append(`Socket event: ${msg}`+'\n');
+        });
+
+        $('#welcomeMail').on('click', function(){
+          sendMail('welcomeMail');
+        });
+
+        $('#marketingMail').on('click', function(){
+          sendMail('marketingMail');
+        });
+
+        $('#notExistMail').on('click', function(){
+          sendMail('nonExistMail');
+        });
+
+        $('#msgToServer').on('click', function(){
+          sendPing();
+        });
+
+        $('#clear').on('click', function(){
+          $("#resultText").text('');
+        });
+
+        function sendPing(){
+          socket.emit('msgToServer', 'Ping test received by server!');
+        }
+
+        function sendMail(template){
+          $.ajax({
+            url : `http://localhost:3001/scheduleMail`,
+            type : 'post',
+            data: {
+                template: template
+            },
+            crossDomain: true,
+            async: false,
+            cache: false,
+            beforeSend : function(){
+              $("#resultText").text("Processing...");
+            }
+          })
+          .always(function(retorno){
+            $("#resultText").text(retorno);
+          })
+          .fail(function(jqXHR, textStatus, msg){
+            $("#resultText").text(`Erro: ${msg}`);
+          });
+        }
+    </script>
+  </body>
+</html>
